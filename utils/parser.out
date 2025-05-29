@@ -1,0 +1,1069 @@
+Created by PLY version 3.11 (http://www.dabeaz.com/ply)
+
+Unused terminals:
+
+    FLOAT
+    TABLE_URL
+
+Grammar
+
+Rule 0     S' -> uql_query
+Rule 1     uql_query -> select_clause from_clause
+Rule 2     uql_query -> select_clause from_clause optional_clause_combo
+Rule 3     select_clause -> SELECT select_expression
+Rule 4     select_expression -> select_expression SEPARATOR select_literal
+Rule 5     select_expression -> select_literal
+Rule 6     select_literal -> ALL
+Rule 7     select_literal -> variable_literal
+Rule 8     select_literal -> nl_literal
+Rule 9     select_literal -> aggregation
+Rule 10    select_literal -> INTEGER
+Rule 11    aggregation -> agg_op LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS
+Rule 12    aggregation -> agg_op LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS
+Rule 13    aggregation -> agg_op LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS AS VAR_NAME
+Rule 14    aggregation -> agg_op LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS AS VAR_NAME
+Rule 15    agg_op -> AVG
+Rule 16    agg_op -> COUNT
+Rule 17    agg_op -> SUM
+Rule 18    variable_literal -> VAR_NAME
+Rule 19    variable_literal -> VAR_NAME AS VAR_NAME
+Rule 20    nl_literal -> NL_LITERAL
+Rule 21    nl_literal -> NL_LITERAL AS VAR_NAME
+Rule 22    from_clause -> FROM VAR_NAME
+Rule 23    optional_clause_combo -> optional_clause_combo optional_clause
+Rule 24    optional_clause_combo -> optional_clause
+Rule 25    optional_clause -> limit_clause
+Rule 26    optional_clause -> to_clause
+Rule 27    optional_clause -> where_clause
+Rule 28    optional_clause -> group_by_clause
+Rule 29    optional_clause -> order_by_clause
+Rule 30    limit_clause -> LIMIT INTEGER
+Rule 31    to_clause -> TO VAR_NAME
+Rule 32    where_clause -> WHERE where_expression
+Rule 33    where_expression -> where_expression AND predicate
+Rule 34    where_expression -> where_expression OR predicate
+Rule 35    where_expression -> predicate
+Rule 36    group_by_clause -> GROUP BY group_by_expression
+Rule 37    group_by_expression -> group_by_expression SEPARATOR group_by_literal
+Rule 38    group_by_expression -> group_by_literal
+Rule 39    group_by_literal -> variable_literal
+Rule 40    group_by_literal -> nl_literal
+Rule 41    order_by_clause -> ORDER BY order_by_expression
+Rule 42    order_by_clause -> ORDER BY order_by_expression DESC
+Rule 43    order_by_expression -> order_by_expression SEPARATOR order_by_literal
+Rule 44    order_by_expression -> order_by_literal
+Rule 45    order_by_literal -> VAR_NAME
+Rule 46    order_by_literal -> NL_LITERAL
+Rule 47    order_by_literal -> INTEGER
+Rule 48    predicate -> NL_LITERAL
+Rule 49    predicate -> VAR_NAME COMPARE_OPERATOR NL_LITERAL
+Rule 50    predicate -> VAR_NAME COMPARE_OPERATOR INTEGER
+
+Terminals, with rules where they appear
+
+ALL                  : 6 12 14
+AND                  : 33
+AS                   : 13 14 19 21
+AVG                  : 15
+BY                   : 36 41 42
+COMPARE_OPERATOR     : 49 50
+COUNT                : 16
+DESC                 : 42
+FLOAT                : 
+FROM                 : 22
+GROUP                : 36
+INTEGER              : 10 30 47 50
+LEFT_PARENTHESIS     : 11 12 13 14
+LIMIT                : 30
+NL_LITERAL           : 20 21 46 48 49
+OR                   : 34
+ORDER                : 41 42
+RIGHT_PARENTHESIS    : 11 12 13 14
+SELECT               : 3
+SEPARATOR            : 4 37 43
+SUM                  : 17
+TABLE_URL            : 
+TO                   : 31
+VAR_NAME             : 11 13 13 14 18 19 19 21 22 31 45 49 50
+WHERE                : 32
+error                : 
+
+Nonterminals, with rules where they appear
+
+agg_op               : 11 12 13 14
+aggregation          : 9
+from_clause          : 1 2
+group_by_clause      : 28
+group_by_expression  : 36 37
+group_by_literal     : 37 38
+limit_clause         : 25
+nl_literal           : 8 40
+optional_clause      : 23 24
+optional_clause_combo : 2 23
+order_by_clause      : 29
+order_by_expression  : 41 42 43
+order_by_literal     : 43 44
+predicate            : 33 34 35
+select_clause        : 1 2
+select_expression    : 3 4
+select_literal       : 4 5
+to_clause            : 26
+uql_query            : 0
+variable_literal     : 7 39
+where_clause         : 27
+where_expression     : 32 33 34
+
+Parsing method: LALR
+
+state 0
+
+    (0) S' -> . uql_query
+    (1) uql_query -> . select_clause from_clause
+    (2) uql_query -> . select_clause from_clause optional_clause_combo
+    (3) select_clause -> . SELECT select_expression
+
+    SELECT          shift and go to state 3
+
+    uql_query                      shift and go to state 1
+    select_clause                  shift and go to state 2
+
+state 1
+
+    (0) S' -> uql_query .
+
+
+
+state 2
+
+    (1) uql_query -> select_clause . from_clause
+    (2) uql_query -> select_clause . from_clause optional_clause_combo
+    (22) from_clause -> . FROM VAR_NAME
+
+    FROM            shift and go to state 5
+
+    from_clause                    shift and go to state 4
+
+state 3
+
+    (3) select_clause -> SELECT . select_expression
+    (4) select_expression -> . select_expression SEPARATOR select_literal
+    (5) select_expression -> . select_literal
+    (6) select_literal -> . ALL
+    (7) select_literal -> . variable_literal
+    (8) select_literal -> . nl_literal
+    (9) select_literal -> . aggregation
+    (10) select_literal -> . INTEGER
+    (18) variable_literal -> . VAR_NAME
+    (19) variable_literal -> . VAR_NAME AS VAR_NAME
+    (20) nl_literal -> . NL_LITERAL
+    (21) nl_literal -> . NL_LITERAL AS VAR_NAME
+    (11) aggregation -> . agg_op LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS
+    (12) aggregation -> . agg_op LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS
+    (13) aggregation -> . agg_op LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS AS VAR_NAME
+    (14) aggregation -> . agg_op LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS AS VAR_NAME
+    (15) agg_op -> . AVG
+    (16) agg_op -> . COUNT
+    (17) agg_op -> . SUM
+
+    ALL             shift and go to state 8
+    INTEGER         shift and go to state 12
+    VAR_NAME        shift and go to state 13
+    NL_LITERAL      shift and go to state 14
+    AVG             shift and go to state 16
+    COUNT           shift and go to state 17
+    SUM             shift and go to state 18
+
+    select_expression              shift and go to state 6
+    select_literal                 shift and go to state 7
+    variable_literal               shift and go to state 9
+    nl_literal                     shift and go to state 10
+    aggregation                    shift and go to state 11
+    agg_op                         shift and go to state 15
+
+state 4
+
+    (1) uql_query -> select_clause from_clause .
+    (2) uql_query -> select_clause from_clause . optional_clause_combo
+    (23) optional_clause_combo -> . optional_clause_combo optional_clause
+    (24) optional_clause_combo -> . optional_clause
+    (25) optional_clause -> . limit_clause
+    (26) optional_clause -> . to_clause
+    (27) optional_clause -> . where_clause
+    (28) optional_clause -> . group_by_clause
+    (29) optional_clause -> . order_by_clause
+    (30) limit_clause -> . LIMIT INTEGER
+    (31) to_clause -> . TO VAR_NAME
+    (32) where_clause -> . WHERE where_expression
+    (36) group_by_clause -> . GROUP BY group_by_expression
+    (41) order_by_clause -> . ORDER BY order_by_expression
+    (42) order_by_clause -> . ORDER BY order_by_expression DESC
+
+    $end            reduce using rule 1 (uql_query -> select_clause from_clause .)
+    LIMIT           shift and go to state 26
+    TO              shift and go to state 27
+    WHERE           shift and go to state 28
+    GROUP           shift and go to state 29
+    ORDER           shift and go to state 30
+
+    optional_clause_combo          shift and go to state 19
+    optional_clause                shift and go to state 20
+    limit_clause                   shift and go to state 21
+    to_clause                      shift and go to state 22
+    where_clause                   shift and go to state 23
+    group_by_clause                shift and go to state 24
+    order_by_clause                shift and go to state 25
+
+state 5
+
+    (22) from_clause -> FROM . VAR_NAME
+
+    VAR_NAME        shift and go to state 31
+
+
+state 6
+
+    (3) select_clause -> SELECT select_expression .
+    (4) select_expression -> select_expression . SEPARATOR select_literal
+
+    FROM            reduce using rule 3 (select_clause -> SELECT select_expression .)
+    SEPARATOR       shift and go to state 32
+
+
+state 7
+
+    (5) select_expression -> select_literal .
+
+    SEPARATOR       reduce using rule 5 (select_expression -> select_literal .)
+    FROM            reduce using rule 5 (select_expression -> select_literal .)
+
+
+state 8
+
+    (6) select_literal -> ALL .
+
+    SEPARATOR       reduce using rule 6 (select_literal -> ALL .)
+    FROM            reduce using rule 6 (select_literal -> ALL .)
+
+
+state 9
+
+    (7) select_literal -> variable_literal .
+
+    SEPARATOR       reduce using rule 7 (select_literal -> variable_literal .)
+    FROM            reduce using rule 7 (select_literal -> variable_literal .)
+
+
+state 10
+
+    (8) select_literal -> nl_literal .
+
+    SEPARATOR       reduce using rule 8 (select_literal -> nl_literal .)
+    FROM            reduce using rule 8 (select_literal -> nl_literal .)
+
+
+state 11
+
+    (9) select_literal -> aggregation .
+
+    SEPARATOR       reduce using rule 9 (select_literal -> aggregation .)
+    FROM            reduce using rule 9 (select_literal -> aggregation .)
+
+
+state 12
+
+    (10) select_literal -> INTEGER .
+
+    SEPARATOR       reduce using rule 10 (select_literal -> INTEGER .)
+    FROM            reduce using rule 10 (select_literal -> INTEGER .)
+
+
+state 13
+
+    (18) variable_literal -> VAR_NAME .
+    (19) variable_literal -> VAR_NAME . AS VAR_NAME
+
+    SEPARATOR       reduce using rule 18 (variable_literal -> VAR_NAME .)
+    FROM            reduce using rule 18 (variable_literal -> VAR_NAME .)
+    LIMIT           reduce using rule 18 (variable_literal -> VAR_NAME .)
+    TO              reduce using rule 18 (variable_literal -> VAR_NAME .)
+    WHERE           reduce using rule 18 (variable_literal -> VAR_NAME .)
+    GROUP           reduce using rule 18 (variable_literal -> VAR_NAME .)
+    ORDER           reduce using rule 18 (variable_literal -> VAR_NAME .)
+    $end            reduce using rule 18 (variable_literal -> VAR_NAME .)
+    AS              shift and go to state 33
+
+
+state 14
+
+    (20) nl_literal -> NL_LITERAL .
+    (21) nl_literal -> NL_LITERAL . AS VAR_NAME
+
+    SEPARATOR       reduce using rule 20 (nl_literal -> NL_LITERAL .)
+    FROM            reduce using rule 20 (nl_literal -> NL_LITERAL .)
+    LIMIT           reduce using rule 20 (nl_literal -> NL_LITERAL .)
+    TO              reduce using rule 20 (nl_literal -> NL_LITERAL .)
+    WHERE           reduce using rule 20 (nl_literal -> NL_LITERAL .)
+    GROUP           reduce using rule 20 (nl_literal -> NL_LITERAL .)
+    ORDER           reduce using rule 20 (nl_literal -> NL_LITERAL .)
+    $end            reduce using rule 20 (nl_literal -> NL_LITERAL .)
+    AS              shift and go to state 34
+
+
+state 15
+
+    (11) aggregation -> agg_op . LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS
+    (12) aggregation -> agg_op . LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS
+    (13) aggregation -> agg_op . LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS AS VAR_NAME
+    (14) aggregation -> agg_op . LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS AS VAR_NAME
+
+    LEFT_PARENTHESIS shift and go to state 35
+
+
+state 16
+
+    (15) agg_op -> AVG .
+
+    LEFT_PARENTHESIS reduce using rule 15 (agg_op -> AVG .)
+
+
+state 17
+
+    (16) agg_op -> COUNT .
+
+    LEFT_PARENTHESIS reduce using rule 16 (agg_op -> COUNT .)
+
+
+state 18
+
+    (17) agg_op -> SUM .
+
+    LEFT_PARENTHESIS reduce using rule 17 (agg_op -> SUM .)
+
+
+state 19
+
+    (2) uql_query -> select_clause from_clause optional_clause_combo .
+    (23) optional_clause_combo -> optional_clause_combo . optional_clause
+    (25) optional_clause -> . limit_clause
+    (26) optional_clause -> . to_clause
+    (27) optional_clause -> . where_clause
+    (28) optional_clause -> . group_by_clause
+    (29) optional_clause -> . order_by_clause
+    (30) limit_clause -> . LIMIT INTEGER
+    (31) to_clause -> . TO VAR_NAME
+    (32) where_clause -> . WHERE where_expression
+    (36) group_by_clause -> . GROUP BY group_by_expression
+    (41) order_by_clause -> . ORDER BY order_by_expression
+    (42) order_by_clause -> . ORDER BY order_by_expression DESC
+
+    $end            reduce using rule 2 (uql_query -> select_clause from_clause optional_clause_combo .)
+    LIMIT           shift and go to state 26
+    TO              shift and go to state 27
+    WHERE           shift and go to state 28
+    GROUP           shift and go to state 29
+    ORDER           shift and go to state 30
+
+    optional_clause                shift and go to state 36
+    limit_clause                   shift and go to state 21
+    to_clause                      shift and go to state 22
+    where_clause                   shift and go to state 23
+    group_by_clause                shift and go to state 24
+    order_by_clause                shift and go to state 25
+
+state 20
+
+    (24) optional_clause_combo -> optional_clause .
+
+    LIMIT           reduce using rule 24 (optional_clause_combo -> optional_clause .)
+    TO              reduce using rule 24 (optional_clause_combo -> optional_clause .)
+    WHERE           reduce using rule 24 (optional_clause_combo -> optional_clause .)
+    GROUP           reduce using rule 24 (optional_clause_combo -> optional_clause .)
+    ORDER           reduce using rule 24 (optional_clause_combo -> optional_clause .)
+    $end            reduce using rule 24 (optional_clause_combo -> optional_clause .)
+
+
+state 21
+
+    (25) optional_clause -> limit_clause .
+
+    LIMIT           reduce using rule 25 (optional_clause -> limit_clause .)
+    TO              reduce using rule 25 (optional_clause -> limit_clause .)
+    WHERE           reduce using rule 25 (optional_clause -> limit_clause .)
+    GROUP           reduce using rule 25 (optional_clause -> limit_clause .)
+    ORDER           reduce using rule 25 (optional_clause -> limit_clause .)
+    $end            reduce using rule 25 (optional_clause -> limit_clause .)
+
+
+state 22
+
+    (26) optional_clause -> to_clause .
+
+    LIMIT           reduce using rule 26 (optional_clause -> to_clause .)
+    TO              reduce using rule 26 (optional_clause -> to_clause .)
+    WHERE           reduce using rule 26 (optional_clause -> to_clause .)
+    GROUP           reduce using rule 26 (optional_clause -> to_clause .)
+    ORDER           reduce using rule 26 (optional_clause -> to_clause .)
+    $end            reduce using rule 26 (optional_clause -> to_clause .)
+
+
+state 23
+
+    (27) optional_clause -> where_clause .
+
+    LIMIT           reduce using rule 27 (optional_clause -> where_clause .)
+    TO              reduce using rule 27 (optional_clause -> where_clause .)
+    WHERE           reduce using rule 27 (optional_clause -> where_clause .)
+    GROUP           reduce using rule 27 (optional_clause -> where_clause .)
+    ORDER           reduce using rule 27 (optional_clause -> where_clause .)
+    $end            reduce using rule 27 (optional_clause -> where_clause .)
+
+
+state 24
+
+    (28) optional_clause -> group_by_clause .
+
+    LIMIT           reduce using rule 28 (optional_clause -> group_by_clause .)
+    TO              reduce using rule 28 (optional_clause -> group_by_clause .)
+    WHERE           reduce using rule 28 (optional_clause -> group_by_clause .)
+    GROUP           reduce using rule 28 (optional_clause -> group_by_clause .)
+    ORDER           reduce using rule 28 (optional_clause -> group_by_clause .)
+    $end            reduce using rule 28 (optional_clause -> group_by_clause .)
+
+
+state 25
+
+    (29) optional_clause -> order_by_clause .
+
+    LIMIT           reduce using rule 29 (optional_clause -> order_by_clause .)
+    TO              reduce using rule 29 (optional_clause -> order_by_clause .)
+    WHERE           reduce using rule 29 (optional_clause -> order_by_clause .)
+    GROUP           reduce using rule 29 (optional_clause -> order_by_clause .)
+    ORDER           reduce using rule 29 (optional_clause -> order_by_clause .)
+    $end            reduce using rule 29 (optional_clause -> order_by_clause .)
+
+
+state 26
+
+    (30) limit_clause -> LIMIT . INTEGER
+
+    INTEGER         shift and go to state 37
+
+
+state 27
+
+    (31) to_clause -> TO . VAR_NAME
+
+    VAR_NAME        shift and go to state 38
+
+
+state 28
+
+    (32) where_clause -> WHERE . where_expression
+    (33) where_expression -> . where_expression AND predicate
+    (34) where_expression -> . where_expression OR predicate
+    (35) where_expression -> . predicate
+    (48) predicate -> . NL_LITERAL
+    (49) predicate -> . VAR_NAME COMPARE_OPERATOR NL_LITERAL
+    (50) predicate -> . VAR_NAME COMPARE_OPERATOR INTEGER
+
+    NL_LITERAL      shift and go to state 41
+    VAR_NAME        shift and go to state 42
+
+    where_expression               shift and go to state 39
+    predicate                      shift and go to state 40
+
+state 29
+
+    (36) group_by_clause -> GROUP . BY group_by_expression
+
+    BY              shift and go to state 43
+
+
+state 30
+
+    (41) order_by_clause -> ORDER . BY order_by_expression
+    (42) order_by_clause -> ORDER . BY order_by_expression DESC
+
+    BY              shift and go to state 44
+
+
+state 31
+
+    (22) from_clause -> FROM VAR_NAME .
+
+    LIMIT           reduce using rule 22 (from_clause -> FROM VAR_NAME .)
+    TO              reduce using rule 22 (from_clause -> FROM VAR_NAME .)
+    WHERE           reduce using rule 22 (from_clause -> FROM VAR_NAME .)
+    GROUP           reduce using rule 22 (from_clause -> FROM VAR_NAME .)
+    ORDER           reduce using rule 22 (from_clause -> FROM VAR_NAME .)
+    $end            reduce using rule 22 (from_clause -> FROM VAR_NAME .)
+
+
+state 32
+
+    (4) select_expression -> select_expression SEPARATOR . select_literal
+    (6) select_literal -> . ALL
+    (7) select_literal -> . variable_literal
+    (8) select_literal -> . nl_literal
+    (9) select_literal -> . aggregation
+    (10) select_literal -> . INTEGER
+    (18) variable_literal -> . VAR_NAME
+    (19) variable_literal -> . VAR_NAME AS VAR_NAME
+    (20) nl_literal -> . NL_LITERAL
+    (21) nl_literal -> . NL_LITERAL AS VAR_NAME
+    (11) aggregation -> . agg_op LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS
+    (12) aggregation -> . agg_op LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS
+    (13) aggregation -> . agg_op LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS AS VAR_NAME
+    (14) aggregation -> . agg_op LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS AS VAR_NAME
+    (15) agg_op -> . AVG
+    (16) agg_op -> . COUNT
+    (17) agg_op -> . SUM
+
+    ALL             shift and go to state 8
+    INTEGER         shift and go to state 12
+    VAR_NAME        shift and go to state 13
+    NL_LITERAL      shift and go to state 14
+    AVG             shift and go to state 16
+    COUNT           shift and go to state 17
+    SUM             shift and go to state 18
+
+    select_literal                 shift and go to state 45
+    variable_literal               shift and go to state 9
+    nl_literal                     shift and go to state 10
+    aggregation                    shift and go to state 11
+    agg_op                         shift and go to state 15
+
+state 33
+
+    (19) variable_literal -> VAR_NAME AS . VAR_NAME
+
+    VAR_NAME        shift and go to state 46
+
+
+state 34
+
+    (21) nl_literal -> NL_LITERAL AS . VAR_NAME
+
+    VAR_NAME        shift and go to state 47
+
+
+state 35
+
+    (11) aggregation -> agg_op LEFT_PARENTHESIS . VAR_NAME RIGHT_PARENTHESIS
+    (12) aggregation -> agg_op LEFT_PARENTHESIS . ALL RIGHT_PARENTHESIS
+    (13) aggregation -> agg_op LEFT_PARENTHESIS . VAR_NAME RIGHT_PARENTHESIS AS VAR_NAME
+    (14) aggregation -> agg_op LEFT_PARENTHESIS . ALL RIGHT_PARENTHESIS AS VAR_NAME
+
+    VAR_NAME        shift and go to state 48
+    ALL             shift and go to state 49
+
+
+state 36
+
+    (23) optional_clause_combo -> optional_clause_combo optional_clause .
+
+    LIMIT           reduce using rule 23 (optional_clause_combo -> optional_clause_combo optional_clause .)
+    TO              reduce using rule 23 (optional_clause_combo -> optional_clause_combo optional_clause .)
+    WHERE           reduce using rule 23 (optional_clause_combo -> optional_clause_combo optional_clause .)
+    GROUP           reduce using rule 23 (optional_clause_combo -> optional_clause_combo optional_clause .)
+    ORDER           reduce using rule 23 (optional_clause_combo -> optional_clause_combo optional_clause .)
+    $end            reduce using rule 23 (optional_clause_combo -> optional_clause_combo optional_clause .)
+
+
+state 37
+
+    (30) limit_clause -> LIMIT INTEGER .
+
+    LIMIT           reduce using rule 30 (limit_clause -> LIMIT INTEGER .)
+    TO              reduce using rule 30 (limit_clause -> LIMIT INTEGER .)
+    WHERE           reduce using rule 30 (limit_clause -> LIMIT INTEGER .)
+    GROUP           reduce using rule 30 (limit_clause -> LIMIT INTEGER .)
+    ORDER           reduce using rule 30 (limit_clause -> LIMIT INTEGER .)
+    $end            reduce using rule 30 (limit_clause -> LIMIT INTEGER .)
+
+
+state 38
+
+    (31) to_clause -> TO VAR_NAME .
+
+    LIMIT           reduce using rule 31 (to_clause -> TO VAR_NAME .)
+    TO              reduce using rule 31 (to_clause -> TO VAR_NAME .)
+    WHERE           reduce using rule 31 (to_clause -> TO VAR_NAME .)
+    GROUP           reduce using rule 31 (to_clause -> TO VAR_NAME .)
+    ORDER           reduce using rule 31 (to_clause -> TO VAR_NAME .)
+    $end            reduce using rule 31 (to_clause -> TO VAR_NAME .)
+
+
+state 39
+
+    (32) where_clause -> WHERE where_expression .
+    (33) where_expression -> where_expression . AND predicate
+    (34) where_expression -> where_expression . OR predicate
+
+    LIMIT           reduce using rule 32 (where_clause -> WHERE where_expression .)
+    TO              reduce using rule 32 (where_clause -> WHERE where_expression .)
+    WHERE           reduce using rule 32 (where_clause -> WHERE where_expression .)
+    GROUP           reduce using rule 32 (where_clause -> WHERE where_expression .)
+    ORDER           reduce using rule 32 (where_clause -> WHERE where_expression .)
+    $end            reduce using rule 32 (where_clause -> WHERE where_expression .)
+    AND             shift and go to state 50
+    OR              shift and go to state 51
+
+
+state 40
+
+    (35) where_expression -> predicate .
+
+    AND             reduce using rule 35 (where_expression -> predicate .)
+    OR              reduce using rule 35 (where_expression -> predicate .)
+    LIMIT           reduce using rule 35 (where_expression -> predicate .)
+    TO              reduce using rule 35 (where_expression -> predicate .)
+    WHERE           reduce using rule 35 (where_expression -> predicate .)
+    GROUP           reduce using rule 35 (where_expression -> predicate .)
+    ORDER           reduce using rule 35 (where_expression -> predicate .)
+    $end            reduce using rule 35 (where_expression -> predicate .)
+
+
+state 41
+
+    (48) predicate -> NL_LITERAL .
+
+    AND             reduce using rule 48 (predicate -> NL_LITERAL .)
+    OR              reduce using rule 48 (predicate -> NL_LITERAL .)
+    LIMIT           reduce using rule 48 (predicate -> NL_LITERAL .)
+    TO              reduce using rule 48 (predicate -> NL_LITERAL .)
+    WHERE           reduce using rule 48 (predicate -> NL_LITERAL .)
+    GROUP           reduce using rule 48 (predicate -> NL_LITERAL .)
+    ORDER           reduce using rule 48 (predicate -> NL_LITERAL .)
+    $end            reduce using rule 48 (predicate -> NL_LITERAL .)
+
+
+state 42
+
+    (49) predicate -> VAR_NAME . COMPARE_OPERATOR NL_LITERAL
+    (50) predicate -> VAR_NAME . COMPARE_OPERATOR INTEGER
+
+    COMPARE_OPERATOR shift and go to state 52
+
+
+state 43
+
+    (36) group_by_clause -> GROUP BY . group_by_expression
+    (37) group_by_expression -> . group_by_expression SEPARATOR group_by_literal
+    (38) group_by_expression -> . group_by_literal
+    (39) group_by_literal -> . variable_literal
+    (40) group_by_literal -> . nl_literal
+    (18) variable_literal -> . VAR_NAME
+    (19) variable_literal -> . VAR_NAME AS VAR_NAME
+    (20) nl_literal -> . NL_LITERAL
+    (21) nl_literal -> . NL_LITERAL AS VAR_NAME
+
+    VAR_NAME        shift and go to state 13
+    NL_LITERAL      shift and go to state 14
+
+    group_by_expression            shift and go to state 53
+    group_by_literal               shift and go to state 54
+    variable_literal               shift and go to state 55
+    nl_literal                     shift and go to state 56
+
+state 44
+
+    (41) order_by_clause -> ORDER BY . order_by_expression
+    (42) order_by_clause -> ORDER BY . order_by_expression DESC
+    (43) order_by_expression -> . order_by_expression SEPARATOR order_by_literal
+    (44) order_by_expression -> . order_by_literal
+    (45) order_by_literal -> . VAR_NAME
+    (46) order_by_literal -> . NL_LITERAL
+    (47) order_by_literal -> . INTEGER
+
+    VAR_NAME        shift and go to state 59
+    NL_LITERAL      shift and go to state 60
+    INTEGER         shift and go to state 61
+
+    order_by_expression            shift and go to state 57
+    order_by_literal               shift and go to state 58
+
+state 45
+
+    (4) select_expression -> select_expression SEPARATOR select_literal .
+
+    SEPARATOR       reduce using rule 4 (select_expression -> select_expression SEPARATOR select_literal .)
+    FROM            reduce using rule 4 (select_expression -> select_expression SEPARATOR select_literal .)
+
+
+state 46
+
+    (19) variable_literal -> VAR_NAME AS VAR_NAME .
+
+    SEPARATOR       reduce using rule 19 (variable_literal -> VAR_NAME AS VAR_NAME .)
+    FROM            reduce using rule 19 (variable_literal -> VAR_NAME AS VAR_NAME .)
+    LIMIT           reduce using rule 19 (variable_literal -> VAR_NAME AS VAR_NAME .)
+    TO              reduce using rule 19 (variable_literal -> VAR_NAME AS VAR_NAME .)
+    WHERE           reduce using rule 19 (variable_literal -> VAR_NAME AS VAR_NAME .)
+    GROUP           reduce using rule 19 (variable_literal -> VAR_NAME AS VAR_NAME .)
+    ORDER           reduce using rule 19 (variable_literal -> VAR_NAME AS VAR_NAME .)
+    $end            reduce using rule 19 (variable_literal -> VAR_NAME AS VAR_NAME .)
+
+
+state 47
+
+    (21) nl_literal -> NL_LITERAL AS VAR_NAME .
+
+    SEPARATOR       reduce using rule 21 (nl_literal -> NL_LITERAL AS VAR_NAME .)
+    FROM            reduce using rule 21 (nl_literal -> NL_LITERAL AS VAR_NAME .)
+    LIMIT           reduce using rule 21 (nl_literal -> NL_LITERAL AS VAR_NAME .)
+    TO              reduce using rule 21 (nl_literal -> NL_LITERAL AS VAR_NAME .)
+    WHERE           reduce using rule 21 (nl_literal -> NL_LITERAL AS VAR_NAME .)
+    GROUP           reduce using rule 21 (nl_literal -> NL_LITERAL AS VAR_NAME .)
+    ORDER           reduce using rule 21 (nl_literal -> NL_LITERAL AS VAR_NAME .)
+    $end            reduce using rule 21 (nl_literal -> NL_LITERAL AS VAR_NAME .)
+
+
+state 48
+
+    (11) aggregation -> agg_op LEFT_PARENTHESIS VAR_NAME . RIGHT_PARENTHESIS
+    (13) aggregation -> agg_op LEFT_PARENTHESIS VAR_NAME . RIGHT_PARENTHESIS AS VAR_NAME
+
+    RIGHT_PARENTHESIS shift and go to state 62
+
+
+state 49
+
+    (12) aggregation -> agg_op LEFT_PARENTHESIS ALL . RIGHT_PARENTHESIS
+    (14) aggregation -> agg_op LEFT_PARENTHESIS ALL . RIGHT_PARENTHESIS AS VAR_NAME
+
+    RIGHT_PARENTHESIS shift and go to state 63
+
+
+state 50
+
+    (33) where_expression -> where_expression AND . predicate
+    (48) predicate -> . NL_LITERAL
+    (49) predicate -> . VAR_NAME COMPARE_OPERATOR NL_LITERAL
+    (50) predicate -> . VAR_NAME COMPARE_OPERATOR INTEGER
+
+    NL_LITERAL      shift and go to state 41
+    VAR_NAME        shift and go to state 42
+
+    predicate                      shift and go to state 64
+
+state 51
+
+    (34) where_expression -> where_expression OR . predicate
+    (48) predicate -> . NL_LITERAL
+    (49) predicate -> . VAR_NAME COMPARE_OPERATOR NL_LITERAL
+    (50) predicate -> . VAR_NAME COMPARE_OPERATOR INTEGER
+
+    NL_LITERAL      shift and go to state 41
+    VAR_NAME        shift and go to state 42
+
+    predicate                      shift and go to state 65
+
+state 52
+
+    (49) predicate -> VAR_NAME COMPARE_OPERATOR . NL_LITERAL
+    (50) predicate -> VAR_NAME COMPARE_OPERATOR . INTEGER
+
+    NL_LITERAL      shift and go to state 66
+    INTEGER         shift and go to state 67
+
+
+state 53
+
+    (36) group_by_clause -> GROUP BY group_by_expression .
+    (37) group_by_expression -> group_by_expression . SEPARATOR group_by_literal
+
+    LIMIT           reduce using rule 36 (group_by_clause -> GROUP BY group_by_expression .)
+    TO              reduce using rule 36 (group_by_clause -> GROUP BY group_by_expression .)
+    WHERE           reduce using rule 36 (group_by_clause -> GROUP BY group_by_expression .)
+    GROUP           reduce using rule 36 (group_by_clause -> GROUP BY group_by_expression .)
+    ORDER           reduce using rule 36 (group_by_clause -> GROUP BY group_by_expression .)
+    $end            reduce using rule 36 (group_by_clause -> GROUP BY group_by_expression .)
+    SEPARATOR       shift and go to state 68
+
+
+state 54
+
+    (38) group_by_expression -> group_by_literal .
+
+    SEPARATOR       reduce using rule 38 (group_by_expression -> group_by_literal .)
+    LIMIT           reduce using rule 38 (group_by_expression -> group_by_literal .)
+    TO              reduce using rule 38 (group_by_expression -> group_by_literal .)
+    WHERE           reduce using rule 38 (group_by_expression -> group_by_literal .)
+    GROUP           reduce using rule 38 (group_by_expression -> group_by_literal .)
+    ORDER           reduce using rule 38 (group_by_expression -> group_by_literal .)
+    $end            reduce using rule 38 (group_by_expression -> group_by_literal .)
+
+
+state 55
+
+    (39) group_by_literal -> variable_literal .
+
+    SEPARATOR       reduce using rule 39 (group_by_literal -> variable_literal .)
+    LIMIT           reduce using rule 39 (group_by_literal -> variable_literal .)
+    TO              reduce using rule 39 (group_by_literal -> variable_literal .)
+    WHERE           reduce using rule 39 (group_by_literal -> variable_literal .)
+    GROUP           reduce using rule 39 (group_by_literal -> variable_literal .)
+    ORDER           reduce using rule 39 (group_by_literal -> variable_literal .)
+    $end            reduce using rule 39 (group_by_literal -> variable_literal .)
+
+
+state 56
+
+    (40) group_by_literal -> nl_literal .
+
+    SEPARATOR       reduce using rule 40 (group_by_literal -> nl_literal .)
+    LIMIT           reduce using rule 40 (group_by_literal -> nl_literal .)
+    TO              reduce using rule 40 (group_by_literal -> nl_literal .)
+    WHERE           reduce using rule 40 (group_by_literal -> nl_literal .)
+    GROUP           reduce using rule 40 (group_by_literal -> nl_literal .)
+    ORDER           reduce using rule 40 (group_by_literal -> nl_literal .)
+    $end            reduce using rule 40 (group_by_literal -> nl_literal .)
+
+
+state 57
+
+    (41) order_by_clause -> ORDER BY order_by_expression .
+    (42) order_by_clause -> ORDER BY order_by_expression . DESC
+    (43) order_by_expression -> order_by_expression . SEPARATOR order_by_literal
+
+    LIMIT           reduce using rule 41 (order_by_clause -> ORDER BY order_by_expression .)
+    TO              reduce using rule 41 (order_by_clause -> ORDER BY order_by_expression .)
+    WHERE           reduce using rule 41 (order_by_clause -> ORDER BY order_by_expression .)
+    GROUP           reduce using rule 41 (order_by_clause -> ORDER BY order_by_expression .)
+    ORDER           reduce using rule 41 (order_by_clause -> ORDER BY order_by_expression .)
+    $end            reduce using rule 41 (order_by_clause -> ORDER BY order_by_expression .)
+    DESC            shift and go to state 69
+    SEPARATOR       shift and go to state 70
+
+
+state 58
+
+    (44) order_by_expression -> order_by_literal .
+
+    DESC            reduce using rule 44 (order_by_expression -> order_by_literal .)
+    SEPARATOR       reduce using rule 44 (order_by_expression -> order_by_literal .)
+    LIMIT           reduce using rule 44 (order_by_expression -> order_by_literal .)
+    TO              reduce using rule 44 (order_by_expression -> order_by_literal .)
+    WHERE           reduce using rule 44 (order_by_expression -> order_by_literal .)
+    GROUP           reduce using rule 44 (order_by_expression -> order_by_literal .)
+    ORDER           reduce using rule 44 (order_by_expression -> order_by_literal .)
+    $end            reduce using rule 44 (order_by_expression -> order_by_literal .)
+
+
+state 59
+
+    (45) order_by_literal -> VAR_NAME .
+
+    DESC            reduce using rule 45 (order_by_literal -> VAR_NAME .)
+    SEPARATOR       reduce using rule 45 (order_by_literal -> VAR_NAME .)
+    LIMIT           reduce using rule 45 (order_by_literal -> VAR_NAME .)
+    TO              reduce using rule 45 (order_by_literal -> VAR_NAME .)
+    WHERE           reduce using rule 45 (order_by_literal -> VAR_NAME .)
+    GROUP           reduce using rule 45 (order_by_literal -> VAR_NAME .)
+    ORDER           reduce using rule 45 (order_by_literal -> VAR_NAME .)
+    $end            reduce using rule 45 (order_by_literal -> VAR_NAME .)
+
+
+state 60
+
+    (46) order_by_literal -> NL_LITERAL .
+
+    DESC            reduce using rule 46 (order_by_literal -> NL_LITERAL .)
+    SEPARATOR       reduce using rule 46 (order_by_literal -> NL_LITERAL .)
+    LIMIT           reduce using rule 46 (order_by_literal -> NL_LITERAL .)
+    TO              reduce using rule 46 (order_by_literal -> NL_LITERAL .)
+    WHERE           reduce using rule 46 (order_by_literal -> NL_LITERAL .)
+    GROUP           reduce using rule 46 (order_by_literal -> NL_LITERAL .)
+    ORDER           reduce using rule 46 (order_by_literal -> NL_LITERAL .)
+    $end            reduce using rule 46 (order_by_literal -> NL_LITERAL .)
+
+
+state 61
+
+    (47) order_by_literal -> INTEGER .
+
+    DESC            reduce using rule 47 (order_by_literal -> INTEGER .)
+    SEPARATOR       reduce using rule 47 (order_by_literal -> INTEGER .)
+    LIMIT           reduce using rule 47 (order_by_literal -> INTEGER .)
+    TO              reduce using rule 47 (order_by_literal -> INTEGER .)
+    WHERE           reduce using rule 47 (order_by_literal -> INTEGER .)
+    GROUP           reduce using rule 47 (order_by_literal -> INTEGER .)
+    ORDER           reduce using rule 47 (order_by_literal -> INTEGER .)
+    $end            reduce using rule 47 (order_by_literal -> INTEGER .)
+
+
+state 62
+
+    (11) aggregation -> agg_op LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS .
+    (13) aggregation -> agg_op LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS . AS VAR_NAME
+
+    SEPARATOR       reduce using rule 11 (aggregation -> agg_op LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS .)
+    FROM            reduce using rule 11 (aggregation -> agg_op LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS .)
+    AS              shift and go to state 71
+
+
+state 63
+
+    (12) aggregation -> agg_op LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS .
+    (14) aggregation -> agg_op LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS . AS VAR_NAME
+
+    SEPARATOR       reduce using rule 12 (aggregation -> agg_op LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS .)
+    FROM            reduce using rule 12 (aggregation -> agg_op LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS .)
+    AS              shift and go to state 72
+
+
+state 64
+
+    (33) where_expression -> where_expression AND predicate .
+
+    AND             reduce using rule 33 (where_expression -> where_expression AND predicate .)
+    OR              reduce using rule 33 (where_expression -> where_expression AND predicate .)
+    LIMIT           reduce using rule 33 (where_expression -> where_expression AND predicate .)
+    TO              reduce using rule 33 (where_expression -> where_expression AND predicate .)
+    WHERE           reduce using rule 33 (where_expression -> where_expression AND predicate .)
+    GROUP           reduce using rule 33 (where_expression -> where_expression AND predicate .)
+    ORDER           reduce using rule 33 (where_expression -> where_expression AND predicate .)
+    $end            reduce using rule 33 (where_expression -> where_expression AND predicate .)
+
+
+state 65
+
+    (34) where_expression -> where_expression OR predicate .
+
+    AND             reduce using rule 34 (where_expression -> where_expression OR predicate .)
+    OR              reduce using rule 34 (where_expression -> where_expression OR predicate .)
+    LIMIT           reduce using rule 34 (where_expression -> where_expression OR predicate .)
+    TO              reduce using rule 34 (where_expression -> where_expression OR predicate .)
+    WHERE           reduce using rule 34 (where_expression -> where_expression OR predicate .)
+    GROUP           reduce using rule 34 (where_expression -> where_expression OR predicate .)
+    ORDER           reduce using rule 34 (where_expression -> where_expression OR predicate .)
+    $end            reduce using rule 34 (where_expression -> where_expression OR predicate .)
+
+
+state 66
+
+    (49) predicate -> VAR_NAME COMPARE_OPERATOR NL_LITERAL .
+
+    AND             reduce using rule 49 (predicate -> VAR_NAME COMPARE_OPERATOR NL_LITERAL .)
+    OR              reduce using rule 49 (predicate -> VAR_NAME COMPARE_OPERATOR NL_LITERAL .)
+    LIMIT           reduce using rule 49 (predicate -> VAR_NAME COMPARE_OPERATOR NL_LITERAL .)
+    TO              reduce using rule 49 (predicate -> VAR_NAME COMPARE_OPERATOR NL_LITERAL .)
+    WHERE           reduce using rule 49 (predicate -> VAR_NAME COMPARE_OPERATOR NL_LITERAL .)
+    GROUP           reduce using rule 49 (predicate -> VAR_NAME COMPARE_OPERATOR NL_LITERAL .)
+    ORDER           reduce using rule 49 (predicate -> VAR_NAME COMPARE_OPERATOR NL_LITERAL .)
+    $end            reduce using rule 49 (predicate -> VAR_NAME COMPARE_OPERATOR NL_LITERAL .)
+
+
+state 67
+
+    (50) predicate -> VAR_NAME COMPARE_OPERATOR INTEGER .
+
+    AND             reduce using rule 50 (predicate -> VAR_NAME COMPARE_OPERATOR INTEGER .)
+    OR              reduce using rule 50 (predicate -> VAR_NAME COMPARE_OPERATOR INTEGER .)
+    LIMIT           reduce using rule 50 (predicate -> VAR_NAME COMPARE_OPERATOR INTEGER .)
+    TO              reduce using rule 50 (predicate -> VAR_NAME COMPARE_OPERATOR INTEGER .)
+    WHERE           reduce using rule 50 (predicate -> VAR_NAME COMPARE_OPERATOR INTEGER .)
+    GROUP           reduce using rule 50 (predicate -> VAR_NAME COMPARE_OPERATOR INTEGER .)
+    ORDER           reduce using rule 50 (predicate -> VAR_NAME COMPARE_OPERATOR INTEGER .)
+    $end            reduce using rule 50 (predicate -> VAR_NAME COMPARE_OPERATOR INTEGER .)
+
+
+state 68
+
+    (37) group_by_expression -> group_by_expression SEPARATOR . group_by_literal
+    (39) group_by_literal -> . variable_literal
+    (40) group_by_literal -> . nl_literal
+    (18) variable_literal -> . VAR_NAME
+    (19) variable_literal -> . VAR_NAME AS VAR_NAME
+    (20) nl_literal -> . NL_LITERAL
+    (21) nl_literal -> . NL_LITERAL AS VAR_NAME
+
+    VAR_NAME        shift and go to state 13
+    NL_LITERAL      shift and go to state 14
+
+    group_by_literal               shift and go to state 73
+    variable_literal               shift and go to state 55
+    nl_literal                     shift and go to state 56
+
+state 69
+
+    (42) order_by_clause -> ORDER BY order_by_expression DESC .
+
+    LIMIT           reduce using rule 42 (order_by_clause -> ORDER BY order_by_expression DESC .)
+    TO              reduce using rule 42 (order_by_clause -> ORDER BY order_by_expression DESC .)
+    WHERE           reduce using rule 42 (order_by_clause -> ORDER BY order_by_expression DESC .)
+    GROUP           reduce using rule 42 (order_by_clause -> ORDER BY order_by_expression DESC .)
+    ORDER           reduce using rule 42 (order_by_clause -> ORDER BY order_by_expression DESC .)
+    $end            reduce using rule 42 (order_by_clause -> ORDER BY order_by_expression DESC .)
+
+
+state 70
+
+    (43) order_by_expression -> order_by_expression SEPARATOR . order_by_literal
+    (45) order_by_literal -> . VAR_NAME
+    (46) order_by_literal -> . NL_LITERAL
+    (47) order_by_literal -> . INTEGER
+
+    VAR_NAME        shift and go to state 59
+    NL_LITERAL      shift and go to state 60
+    INTEGER         shift and go to state 61
+
+    order_by_literal               shift and go to state 74
+
+state 71
+
+    (13) aggregation -> agg_op LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS AS . VAR_NAME
+
+    VAR_NAME        shift and go to state 75
+
+
+state 72
+
+    (14) aggregation -> agg_op LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS AS . VAR_NAME
+
+    VAR_NAME        shift and go to state 76
+
+
+state 73
+
+    (37) group_by_expression -> group_by_expression SEPARATOR group_by_literal .
+
+    SEPARATOR       reduce using rule 37 (group_by_expression -> group_by_expression SEPARATOR group_by_literal .)
+    LIMIT           reduce using rule 37 (group_by_expression -> group_by_expression SEPARATOR group_by_literal .)
+    TO              reduce using rule 37 (group_by_expression -> group_by_expression SEPARATOR group_by_literal .)
+    WHERE           reduce using rule 37 (group_by_expression -> group_by_expression SEPARATOR group_by_literal .)
+    GROUP           reduce using rule 37 (group_by_expression -> group_by_expression SEPARATOR group_by_literal .)
+    ORDER           reduce using rule 37 (group_by_expression -> group_by_expression SEPARATOR group_by_literal .)
+    $end            reduce using rule 37 (group_by_expression -> group_by_expression SEPARATOR group_by_literal .)
+
+
+state 74
+
+    (43) order_by_expression -> order_by_expression SEPARATOR order_by_literal .
+
+    DESC            reduce using rule 43 (order_by_expression -> order_by_expression SEPARATOR order_by_literal .)
+    SEPARATOR       reduce using rule 43 (order_by_expression -> order_by_expression SEPARATOR order_by_literal .)
+    LIMIT           reduce using rule 43 (order_by_expression -> order_by_expression SEPARATOR order_by_literal .)
+    TO              reduce using rule 43 (order_by_expression -> order_by_expression SEPARATOR order_by_literal .)
+    WHERE           reduce using rule 43 (order_by_expression -> order_by_expression SEPARATOR order_by_literal .)
+    GROUP           reduce using rule 43 (order_by_expression -> order_by_expression SEPARATOR order_by_literal .)
+    ORDER           reduce using rule 43 (order_by_expression -> order_by_expression SEPARATOR order_by_literal .)
+    $end            reduce using rule 43 (order_by_expression -> order_by_expression SEPARATOR order_by_literal .)
+
+
+state 75
+
+    (13) aggregation -> agg_op LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS AS VAR_NAME .
+
+    SEPARATOR       reduce using rule 13 (aggregation -> agg_op LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS AS VAR_NAME .)
+    FROM            reduce using rule 13 (aggregation -> agg_op LEFT_PARENTHESIS VAR_NAME RIGHT_PARENTHESIS AS VAR_NAME .)
+
+
+state 76
+
+    (14) aggregation -> agg_op LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS AS VAR_NAME .
+
+    SEPARATOR       reduce using rule 14 (aggregation -> agg_op LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS AS VAR_NAME .)
+    FROM            reduce using rule 14 (aggregation -> agg_op LEFT_PARENTHESIS ALL RIGHT_PARENTHESIS AS VAR_NAME .)
+

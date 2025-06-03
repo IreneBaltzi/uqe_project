@@ -4,7 +4,7 @@ from collections import defaultdict
 import random
 
 
-def stratified_sampling(data, f, K=10, sampling_ratio=0.1, seed=42):
+def stratified_sampling(data, f, K=10, sampling_ratio=0.1, seed=42, return_rows=False):
     """
     Estimate E[f(Ti, cond)] using stratified sampling as described in UQE Algorithm 1.
 
@@ -66,4 +66,4 @@ def stratified_sampling(data, f, K=10, sampling_ratio=0.1, seed=42):
         weight_total += wi
 
     estimate = weighted_sum / weight_total
-    return estimate
+    return (estimate, [data[i] for i in S]) if return_rows else estimate

@@ -1,89 +1,77 @@
+# --- stratified_sampling.py (Refactored) ---
+import os
+import json
 import numpy as np
-from sklearn.cluster import KMeans
+import faiss
 from collections import defaultdict
-import random
 
-def stratified_sampling(data, f, K=10, sampling_ratio=0.1, seed=42, return_rows=False):
-    """
-    Estimate E[f(Ti)] via stratified sampling (UQE Alg. 1).
 
-    Args:
-        data (List[Dict]): Each row must include a precomputed 'embedding'.
-        f (Callable[[Dict], float]): Oracle function (e.g. LLM call) returning 0/1 or a real value.
-        K (int): Number of clusters.
-        sampling_ratio (float): Fraction of each cluster to sample.
-        seed (int): Random seed for reproducibility.
-        return_rows (bool): If True, also return the list of sampled rows and their weights.
+def compute_and_save_clusters(embeddings_jsonl: str, num_clusters: int, output_cluster_file: str):
+    embeddings_list = []
+    with open(embeddings_jsonl, 'r') as f:
+        for line in f:
+            record = json.loads(line)
+            emb = record.get('embedding')
+            if emb is None:
+                raise ValueError("Missing 'embedding' in record")
+            embeddings_list.append(emb)
 
-    Returns:
-        If return_rows=False:
-            float: Estimated mean ∑₍i∈S₎ wᵢ f(data[i]) / ∑₍i∈S₎ wᵢ  
-        If return_rows=True:
-            (estimate, sampled_rows, sampled_weights)
-            - estimate (float): as above.
-            - sampled_rows (List[Dict]): the actual row dicts sampled.
-            - sampled_weights (List[float]): the corresponding wᵢ for each sampled row.
-    """
-    random.seed(seed)
+    embeddings = np.asarray(embeddings_list, dtype='float32')
+    N, D = embeddings.shape
+
+    kmeans = faiss.Kmeans(d=D, k=num_clusters, niter=20, verbose=True, gpu=False)
+    kmeans.train(embeddings)
+    centroids = kmeans.centroids
+
+    index = faiss.IndexFlatL2(D)
+    index.add(centroids)
+    _, assignments = index.search(embeddings, 1)
+    assignments = assignments.flatten().tolist()
+
+    with open(output_cluster_file, 'w') as out_f:
+        json.dump({
+            'assignments': assignments,
+            'centroids': centroids.tolist()
+        }, out_f)
+
+
+def stratified_sample_and_weight(data, cluster_file, sampling_ratio, seed=42):
     np.random.seed(seed)
+    with open(cluster_file, 'r') as f:
+        clusters = json.load(f)
+    assignments = np.array(clusters['assignments'])
+    num_clusters = len(clusters['centroids'])
 
-    # Step 1: Extract embeddings into NumPy array
-    embeddings = np.array([row['embedding'] for row in data])
-
-    # Step 2: Cluster into K groups
-    kmeans = KMeans(n_clusters=K, random_state=seed).fit(embeddings)
-    labels = kmeans.labels_
-
-    # Attach the cluster label to each row
-    for i, row in enumerate(data):
-        row['cluster'] = int(labels[i])
-
-    # Step 3: Build cluster → list of indices
     cluster_to_indices = defaultdict(list)
-    for i, row in enumerate(data):
-        cluster_to_indices[row['cluster']].append(i)
+    for i, c in enumerate(assignments):
+        cluster_to_indices[c].append(i)
 
-    # Step 4: Sample from each cluster
     sampled_indices = []
-    for cluster, indices in cluster_to_indices.items():
-        n_total = len(indices)
-        # Number to sample from this cluster
-        n_sample = max(1, int(n_total * sampling_ratio))
-        # If the cluster is tiny, we still sample at least one
-        chosen = random.sample(indices, min(n_sample, n_total))
+    for c, indices in cluster_to_indices.items():
+        n_sample = max(1, int(len(indices) * sampling_ratio))
+        chosen = np.random.choice(indices, min(n_sample, len(indices)), replace=False)
         sampled_indices.extend(chosen)
 
-    S = sampled_indices  # the set of sampled indices
-    weights = {}         # index → weight
-
-    # Count how many sampled per cluster
     cluster_counts_in_sample = defaultdict(int)
-    for i in S:
-        c = data[i]['cluster']
+    for i in sampled_indices:
+        c = assignments[i]
         cluster_counts_in_sample[c] += 1
 
-    # Step 5: Compute each sampled index’s weight wᵢ = |Cₖ| / |S ∩ Cₖ|
-    for i in S:
-        c = data[i]['cluster']
-        total_in_cluster  = len(cluster_to_indices[c])
-        sampled_in_cluster = cluster_counts_in_sample[c]
-        weights[i] = total_in_cluster / sampled_in_cluster
+    weights = {}
+    for i in sampled_indices:
+        c = assignments[i]
+        weights[i] = len(cluster_to_indices[c]) / cluster_counts_in_sample[c]
 
-    # Step 6: Evaluate f(row) on each sampled index and form weighted estimate
-    weighted_sum = 0.0
-    weight_total = 0.0
-    for i in S:
-        w_i = weights[i]
-        f_i = f(data[i])
-        weighted_sum += w_i * f_i
-        weight_total += w_i
+    sampled_rows = [data[i] for i in sampled_indices]
+    sampled_weights = [weights[i] for i in sampled_indices]
+    return sampled_rows, sampled_weights, assignments
 
-    estimate = weighted_sum / weight_total
 
-    if not return_rows:
-        return estimate
+if __name__ == "__main__":
+    EMBEDDINGS_FILE = os.getenv("EMBEDDINGS_FILE", "/data/imdb_embed_clustering.json")
+    CLUSTERED_OUTPUT = os.getenv("ASSIGNMENTS_FILE", "/data/imdb_clustered_data.json")
+    NUM_CLUSTERS = int(os.getenv("K_CLUSTERS", "50"))
 
-    # If return_rows=True, also return the list of sampled rows and weights
-    sampled_rows = [data[i] for i in S]
-    sampled_weights = [weights[i] for i in S]
-    return estimate, sampled_rows, sampled_weights
+    print(f"Clustering {EMBEDDINGS_FILE} into {NUM_CLUSTERS} clusters...")
+    compute_and_save_clusters(EMBEDDINGS_FILE, NUM_CLUSTERS, CLUSTERED_OUTPUT)
+    print(f"Cluster info saved to {CLUSTERED_OUTPUT}")

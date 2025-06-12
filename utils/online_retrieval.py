@@ -61,10 +61,14 @@ def online_retrieval(data, f, batch_size=10, max_samples=200, seed=42, limit=Non
             S.add(i)
             labels[i] = f(data[i])
 
+            if labels[i] == 1:
+                print(f"Accepted positive row {i} — total positives: {num_positives()}")
+
             # If we have reached the desired `limit` of positives, stop immediately
             if limit is not None and num_positives() >= limit:
-                break  # break out of the inner for‐loop
-
+                break  # exits the for loop
+        if limit is not None and num_positives() >= limit:
+            break  # exits the while loop
         # Step 4: if we have seen at least one positive & one negative, retrain surrogate
         y_train = [labels[j] for j in S]
         if len(set(y_train)) >= 2:

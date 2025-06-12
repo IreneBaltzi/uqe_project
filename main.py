@@ -11,25 +11,28 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.linear_model import LogisticRegression
 
 from utils.tokenizer_parser import parse_query
-from utils.stratified_sampling import stratified_sampling
+from utils.stratified_sampling import stratified_sample_and_weight
 from utils.online_retrieval import online_retrieval  # we’ll modify this below
+from utils.virtual_cache import VirtualColumnCache
+
 
 # =============================================================================
-# 1. GLOBAL DEFAULTS & PARAMETERIZATION
+# GLOBAL DEFAULTS & PARAMETERIZATION
 # =============================================================================
 
-RETRIEVAL_FILE = os.getenv("RETRIEVAL_FILE", "Datasets/IMDB/currated/imdb_embed_retrieval.json")
-CLUSTER_FILE   = os.getenv("CLUSTER_FILE",   "Datasets/IMDB/currated/imdb_embed_clustering.json")
+RETRIEVAL_FILE = os.getenv("RETRIEVAL_FILE", "/data/imdb_embed_retrieval.json")
+CLUSTERED_DATA  = os.getenv("CLUSTER_FILE",   "/data/imdb_clustered_data.json")
+CLUSTER_FILE  = os.getenv("CLUSTER_FILE",   "/data/imdb_embed_clustering.json")
 
 # Default hyperparameters
-DEFAULT_K            = int(os.getenv("K_CLUSTERS", 10))      # number of clusters for stratified sampling
-DEFAULT_RATIO        = float(os.getenv("SAMPLING_RATIO", 0.1)) # fraction to sample per cluster
+DEFAULT_K            = int(os.getenv("K_CLUSTERS", 5))      # number of clusters for stratified sampling
+DEFAULT_RATIO        = float(os.getenv("SAMPLING_RATIO", 0.005)) # fraction to sample per cluster
 DEFAULT_BATCH_SIZE   = int(os.getenv("BATCH_SIZE", 10))     # for active retrieval
 DEFAULT_MAX_SAMPLES  = int(os.getenv("MAX_SAMPLES", 256))   # budget for active retrieval
 DEFAULT_SEED         = int(os.getenv("SEED", 42))
 
 # =============================================================================
-# 2. HELPER FUNCTIONS FOR LLM CALLS
+# HELPER FUNCTIONS FOR LLM CALLS
 # =============================================================================
 
 def call_llm_binary(prompt: str) -> str:
@@ -42,21 +45,27 @@ def call_llm_binary(prompt: str) -> str:
     import requests
 
     payload = {
-        "model": "llama3", 
+        "model": "llama3.1:8b", 
         "prompt": prompt,
         "max_tokens": 4,
         "temperature": 0.0
     }
-    response = requests.post("http://localhost:11434/api/generate", json=payload)
-    text = response.json()["text"].strip().lower()
-    # We expect exactly "yes" or "no"; if something else comes back, handle gracefully
-    if "yes" in text:
-        return "yes"
-    elif "no" in text:
-        return "no"
-    else:
-        # If ambiguous, default to "no"
-        return "no"
+    response = requests.post("http://ollama-container:11434/api/generate", json=payload)
+    try:
+        # Stitch together all 'response' chunks
+        chunks = response.text.strip().split("\n")
+        full_response = ""
+        for line in chunks:
+            data = json.loads(line)
+            full_response += data.get("response", "")
+
+        answer = full_response.strip().lower()
+        return "yes" if "yes" in answer else "no"
+
+    except Exception as e:
+        print("Failed to parse LLM response:", e)
+        print("Raw response text:", response.text)
+        raise e
 
 def call_llm_list(prompt: str) -> list:
     """
@@ -66,16 +75,24 @@ def call_llm_list(prompt: str) -> list:
     import requests
 
     payload = {
-        "model": "llama3",
+        "model": "llama3.1:8b",
         "prompt": prompt + "\n\nPlease output each label on its own line.",
         "max_tokens": 100,
         "temperature": 0.7
     }
-    response = requests.post("http://localhost:11434/api/generate", json=payload)
-    raw = response.json()["text"].strip()
-    # Split by newline, filter out empty lines
-    labels = [line.strip() for line in raw.split("\n") if line.strip()]
-    return labels
+    response = requests.post("http://ollama-container:11434/api/generate", json=payload)
+    try:
+        chunks = response.text.strip().split("\n")
+        full_response = ""
+        for line in chunks:
+            data = json.loads(line)
+            full_response += data.get("response", "")
+        labels = [line.strip() for line in full_response.split("\n") if line.strip()]
+        return labels
+    except Exception as e:
+        print("Failed to parse LLM list response:", e)
+        print("Raw response text:", response.text)
+        raise e
 
 def call_llm_single(prompt: str) -> str:
     """
@@ -85,141 +102,131 @@ def call_llm_single(prompt: str) -> str:
     import requests
 
     payload = {
-        "model": "llama3",
+        "model": "llama3.1:8b",
         "prompt": prompt + "\n\nAnswer with exactly one of the above labels.",
         "max_tokens": 10,
         "temperature": 0.0
     }
-    response = requests.post("http://localhost:11434/api/generate", json=payload)
-    return response.json()["text"].strip()
+    response = requests.post("http://ollama-container:11434/api/generate", json=payload)
+    try:
+        chunks = response.text.strip().split("\n")
+        full_response = ""
+        for line in chunks:
+            data = json.loads(line)
+            full_response += data.get("response", "")
+        return full_response.strip()
+    except Exception as e:
+        print("Failed to parse LLM single response:", e)
+        print("Raw response text:", response.text)
+        raise e
 
 # =============================================================================
-# 3. LOW-LEVEL KERNEL IMPLEMENTATIONS
+# LOW-LEVEL KERNEL IMPLEMENTATIONS
 # =============================================================================
 
-def execute_agg_where(condition_nl: str, K: int, sampling_ratio: float, seed: int, validate: bool):
-    """
-    Implements: SELECT COUNT(*) FROM movie_reviews WHERE condition_nl
-    Uses stratified_sampling over imdb_embed_clustering.json.
-    Returns: estimated_count (integer); if validate=True also prints true count.
-    """
+def execute_agg_where(condition_nl: str, sampling_ratio: float, seed: int, validate: bool):
+    cache = VirtualColumnCache()
 
-    # Build f_where(row) that returns 1 if LLM says "yes", else 0.
     def f_where(row):
-        prompt = f"""Review: "{row['review']}"
-Does this review satisfy: {condition_nl} ? Answer "yes" or "no"."""
-        return 1 if call_llm_binary(prompt) == "yes" else 0
+        row_id = row["id"]
+        column = condition_nl
+        def compute_fn():
+            prompt = (
+                "Read the following movie review and determine if its sentiment is positive or negative. "
+                "If the review is mixed, classify based on the overall tone.\n"
+                f"Review: \"{row['review']}\"\n"
+                f"Question: Does this review satisfy the condition — {condition_nl}?\n"
+                "Answer with yes or no only."
+            )
+            return 1 if call_llm_binary(prompt) == "yes" else 0
+        return cache.get_or_compute(row_id, column, compute_fn)
 
-    # 1. Load clustered data
-    data = []
-    with open(CLUSTER_FILE, "r") as f:
-        for line in f:
-            data.append(json.loads(line))
+    docs = [json.loads(line) for line in open(CLUSTER_FILE, 'r')]
+    sampled_rows, sampled_weights, _ = stratified_sample_and_weight(docs, CLUSTERED_DATA, sampling_ratio, seed)
 
-    # 2. Run stratified sampling (returns a fraction estimate)
-    estimate_frac = stratified_sampling(
-        data,
-        f_where,
-        K=K,
-        sampling_ratio=sampling_ratio,
-        seed=seed,
-        return_rows=False  # we only need the fraction
-    )
+    total_weighted, total_weight = 0.0, 0.0
+    for row, weight in zip(sampled_rows, sampled_weights):
+        result = f_where(row)
+        total_weighted += weight * result
+        total_weight += weight
 
-    N = len(data)
-    est_count = int(round(estimate_frac * N))
+    if total_weight == 0:
+        print("[WARN] Total weight is zero.")
+        return 0
 
-    if validate:
-        # Compute the true count (costly; invokes LLM N times)
-        true_count = sum(f_where(row) for row in data)
-        print(f"[Validation] True count = {true_count}, Estimate = {est_count}")
+    estimate_count = int(round((total_weighted / total_weight) * len(docs)))
+    print(f"[RESULT] Estimate = {estimate_count}")
 
-    return est_count
+    if validate and condition_nl[1].strip('"').lower() in ["the review is positive", "the review is negative"]:
+        label = condition_nl[1].strip('"').lower().split()[-1]
+        true_count = sum(1 for doc in docs if doc.get('label','').lower() == label)
+        print(f"[Validation] True count = {true_count}, Estimate = {estimate_count}")
+
+    return estimate_count
 
 
-def execute_select_groupby(condition_nl: str, groupby_nl: str, K: int, sampling_ratio: float, seed: int, validate: bool):
+def execute_select_groupby(condition_nl: str,
+                           groupby_nl: str,
+                           sampling_ratio: float,
+                           seed: int):
     """
-    Implements:
-      SELECT "groupby_nl" AS alias, COUNT(*) 
-        FROM movie_reviews 
-       WHERE condition_nl 
-    GROUP BY "groupby_nl" AS alias
-
-    1. Stratified sample to get a small subset of matching rows (with weights).
-    2. Ask LLM to propose 3-5 category labels for why reviews match (taxonomy).
-    3. Ask LLM to classify each sampled row into one label, then multiply by its weight.
-    4. Return a dict {label: estimated_count}.
-    If validate=True, also scan all rows for ground-truth grouping (very costly).
+    Abstraction + aggregation via stratified sampling and taxonomy.
     """
-
-    # Build f_where(row) exactly as above
+    cache = VirtualColumnCache()
     def f_where(row):
-        prompt = f"""Review: "{row['review']}"
-Does this review satisfy: {condition_nl} ? Answer "yes" or "no"."""
-        return 1 if call_llm_binary(prompt) == "yes" else 0
+        row_id = row["id"]
+        column = condition_nl
+        def compute_fn():
+            prompt = (
+                f'Review: "{row["review"]}"\n'
+                f'Does this review satisfy: {condition_nl}? Answer "yes" or "no".'
+            )
+            return 1 if call_llm_binary(prompt) == "yes" else 0
+        return cache.get_or_compute(row_id, column, compute_fn)
 
-    # 1. Load clustered data
-    data = []
-    with open(CLUSTER_FILE, "r") as f:
-        for line in f:
-            data.append(json.loads(line))
+    docs = [json.loads(line) for line in open(RETRIEVAL_FILE, 'r')]
+    N = len(docs)
 
-    # 2. Stratified sample THIS subset to get (estimate_frac, sampled_rows, sampled_weights)
-    estimate_frac, sampled_rows, sampled_weights = stratified_sampling(
-        data,
-        f_where,
-        K=K,
-        sampling_ratio=sampling_ratio,
-        seed=seed,
-        return_rows=True
+    sampler = stratified_sample_and_weight(CLUSTER_FILE, seed=seed)
+    num_samples = max(1, int(sampling_ratio * N))
+    sample_indices = sampler.sample(num_samples)
+    sampled_rows = [docs[i] for i in sample_indices]
+    sampled_weights = []
+    for idx in sample_indices:
+        pid = sampler.assignments[idx]
+        p = sampler.cluster_sizes[pid] / N
+        sampled_weights.append(1.0 / p)
+
+    # Taxonomy extraction
+    few = sampled_rows[:5]
+    examples = "\n---\n".join(r['review'] for r in few)
+    prompt_tax = (
+        f"We have example reviews that match: {condition_nl}\n"
+        f"---\n{examples}\n---\n"
+        "Please propose 3 to 5 concise category labels."
     )
+    taxonomy = call_llm_list(prompt_tax) or ["Cat1","Cat2"]
 
-    # 3. Taxonomy extraction: ask LLM to propose labels (3-5) based on first few sampled examples
-    #    We typically show up to 5 examples, but you can adjust.
-    few_examples = sampled_rows[:5]
-    example_texts = "\n---\n".join(r["review"] for r in few_examples)
-    prompt_taxonomy = f"""
-We have example reviews that match this condition: {condition_nl}
----
-{example_texts}
----
-Please propose 3 to 5 concise category labels that explain why these reviews match.
-"""
-    taxonomy = call_llm_list(prompt_taxonomy)
-    if len(taxonomy) == 0:
-        # Fallback if LLM returns nothing
-        taxonomy = ["Category1", "Category2"]
+    # Classification
+    counts = defaultdict(float)
+    for row, w in zip(sampled_rows, sampled_weights):
+        row_id = row['id']
+        column = f"reason|{condition_nl}|{groupby_nl}"
+        def comp():
+            prompt = (
+                f"Possible reasons: {taxonomy}\n"
+                f"Review: \"{row['review']}\"\n"
+                "Which single reason best explains why this review matches?"
+            )
+            lbl = call_llm_single(prompt)
+            return lbl if lbl in taxonomy else taxonomy[0]
+        lbl = cache.get_or_compute(row_id, column, comp)
+        counts[lbl] += w
 
-    # 4. Classify each sampled row into one of the taxonomy labels (weighted count)
-    group_counts = defaultdict(float)
-    for idx, row in enumerate(sampled_rows):
-        prompt_classify = f"""
-Possible reasons: {taxonomy}
-Review: "{row['review']}"
-Which single reason best explains why this review matches?"""
-        label = call_llm_single(prompt_classify)
-        if label not in taxonomy:
-            # If LLM output is slightly off, pick the first taxonomy label as default
-            label = taxonomy[0]
-        group_counts[label] += sampled_weights[idx]
-
-    # 5. If validate=True, compute ground-truth on ALL matching rows (very expensive)
-    if validate:
-        true_group_counts = defaultdict(int)
-        for row in data:
-            if f_where(row) == 1:
-                # Classify each truly-positive row
-                prompt_val = f"""
-Possible reasons: {taxonomy}
-Review: "{row['review']}"
-Which single reason best explains why this review matches?"""
-                true_label = call_llm_single(prompt_val)
-                if true_label not in taxonomy:
-                    true_label = taxonomy[0]
-                true_group_counts[true_label] += 1
-        print("[Validation] True group counts:", dict(true_group_counts))
-
-    return dict(group_counts)
+    # Normalize to total counts
+    total_w = sum(counts.values())
+    result = {lbl: int(round((w/total_w)*N)) for lbl, w in counts.items()}
+    return result
 
 
 def execute_select_limit(condition_nl: str,
@@ -229,34 +236,26 @@ def execute_select_limit(condition_nl: str,
                          seed: int,
                          validate: bool):
     """
-    Implements:
-      SELECT * 
-        FROM movie_reviews 
-       WHERE condition_nl 
-      LIMIT limit_num
-
-    This calls the online_retrieval(...) function (from online_retrieval.py),
-    passing `limit=limit_num` so that it stops as soon as `limit_num` positives
-    are found (or once `max_samples` labels have been used).
-
-    Returns a list of up to `limit_num` matching rows. If validate=True, also
-    computes the true positives by scanning all rows.
+    Semantic retrieval via online active learning.
     """
-
-    # 1. Define f_where(row) which asks the LLM (or oracle) yes/no for each row.
+    cache = VirtualColumnCache()
     def f_where(row):
-        prompt = f"""Review: "{row['review']}"
-Does this review satisfy: {condition_nl} ? Answer "yes" or "no"."""
-        return 1 if call_llm_binary(prompt) == "yes" else 0
+        row_id = row['id']
+        column = condition_nl
+        def compute_fn():
+            prompt = (
+                "You will be given a movie review and a condition to evaluate.\n"
+                "Your task is to determine if the review satisfies the condition below.\n\n"
+                f"Condition: {condition_nl}\n"
+                f"Review: \"{row['review']}\"\n\n"
+                "Does the review satisfy the condition above?\n"
+                "Answer with only: yes or no."
+            )
+            return 1 if call_llm_binary(prompt) == "yes" else 0
+        return cache.get_or_compute(row_id, column, compute_fn)
 
-    # 2. Load the entire retrieval dataset from disk
-    data = []
-    with open(RETRIEVAL_FILE, "r") as f:
-        for line in f:
-            data.append(json.loads(line))
-
-    # 3. Call online_retrieval from online_retrieval.py, passing limit=limit_num
-    retrieved_rows = online_retrieval(
+    data = [json.loads(line) for line in open(RETRIEVAL_FILE, 'r')]
+    retrieved = online_retrieval(
         data=data,
         f=f_where,
         batch_size=batch_size,
@@ -264,126 +263,78 @@ Does this review satisfy: {condition_nl} ? Answer "yes" or "no"."""
         seed=seed,
         limit=limit_num
     )
-
-    # 4. If validate=True, compute the true positives by scanning every row
-    if validate:
-        true_positives = [row for row in data if f_where(row) == 1]
-        print(f"[Validation] True positives = {len(true_positives)}, Retrieved = {len(retrieved_rows)}")
-
-    return retrieved_rows
+    if validate and condition_nl[1].strip('"').lower() in ["the review is positive", "the review is negative"]:
+        lbl = condition_nl[1].strip('"').lower().split()[-1]
+        true = sum(1 for d in data if d.get('label','').lower()==lbl)
+        print(f"[Validation] True matches = {true}, Retrieved = {len(retrieved)}")
+    return retrieved
 
 
 # =============================================================================
-# 4. THE “COMPILER” FUNCTION
+#  THE “COMPILER” FUNCTION
 # =============================================================================
 
 def compile_and_execute(query_str: str,
-                        K: int, sampling_ratio: float, batch_size: int,
-                        max_samples: int, seed: int, validate: bool):
-    """
-    1. Parse the query string into a fixed 7-tuple.
-    2. Decide which case (AGG_WHERE, SELECT_GROUPBY, SELECT_LIMIT).
-    3. Call the appropriate kernel above and return its result.
-    """
+                        sampling_ratio: float,
+                        batch_size: int,
+                        max_samples: int,
+                        seed: int,
+                        validate: bool):
     parsed = parse_query(query_str)
-    # parsed is a 7-tuple: ('QUERY', select_clause, from_clause,
-    #                       where_clause_or_None,
-    #                       groupby_clause_or_None,
-    #                       orderby_clause_or_None,
-    #                       limit_clause_or_None)
+    _, select_clause, _, where_clause, groupby_clause, orderby_clause, limit_clause = parsed
+    is_agg = any(lit[0] in ('AGG','AGG_AS') for lit in select_clause[1])
+    has_gb = groupby_clause is not None
+    has_lim = limit_clause is not None
 
-    _, select_clause, from_clause, where_clause, groupby_clause, orderby_clause, limit_clause = parsed
-
-    # 1. Is this an aggregation (COUNT)?
-    is_agg   = any(lit[0] in ('AGG', 'AGG_AS') for lit in select_clause)
-    # 2. Is there a GROUP BY?
-    has_gb   = (groupby_clause is not None)
-    # 3. Is there a LIMIT?
-    has_lim  = (limit_clause is not None)
 
     if is_agg and has_gb:
-        # CASE: SELECT ... GROUP BY ... (abstraction + aggregation)
-        # Extract the natural‐language text from groupby_clause
-        # groupby_clause is ('GROUP_BY_AS', nl_text, alias)
-        groupby_nl = groupby_clause[1]  # the quoted text
-        # Extract the WHERE text
-        if where_clause is None:
-            print("Error: GROUP BY query must have a WHERE clause.")
-            sys.exit(1)
-        condition_nl = where_clause[1]  # e.g. '"the review is positive"'
         return execute_select_groupby(
-            condition_nl=condition_nl,
-            groupby_nl=groupby_nl,
-            K=K,
+            condition_nl=groupby_clause[1],
+            groupby_nl=groupby_clause[1],
             sampling_ratio=sampling_ratio,
-            seed=seed,
-            validate=validate
+            seed=seed
         )
-
-    elif is_agg and not has_gb:
-        # CASE: SELECT COUNT(*) ... WHERE ... (conditional aggregation)
-        if where_clause is None:
-            print("Error: COUNT(*) query must have a WHERE clause.")
-            sys.exit(1)
-        condition_nl = where_clause[1]
+    elif is_agg:
         return execute_agg_where(
-            condition_nl=condition_nl,
-            K=K,
+            condition_nl=where_clause[1],
             sampling_ratio=sampling_ratio,
             seed=seed,
             validate=validate
         )
-
-    elif not is_agg and has_lim:
-        # CASE: SELECT * ... WHERE ... LIMIT ... (semantic retrieval)
-        if where_clause is None:
-            print("Error: SELECT * ... LIMIT must have a WHERE clause.")
-            sys.exit(1)
-        condition_nl = where_clause[1]
-        limit_num    = limit_clause[1]
+    elif has_lim:
         return execute_select_limit(
-            condition_nl=condition_nl,
-            limit_num=limit_num,
+            condition_nl=where_clause[1],
+            limit_num=limit_clause[1],
             batch_size=batch_size,
             max_samples=max_samples,
             seed=seed,
             validate=validate
         )
-
     else:
-        print("Error: Unsupported or malformed query.")
+        print("Error: Unsupported query.")
         sys.exit(1)
 
 
 # =============================================================================
-# 5. MAIN: PARSE ARGS AND RUN
+#  MAIN: PARSE ARGS AND RUN
 # =============================================================================
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Run a UQE query on IMDB.")
-    parser.add_argument("--query", type=str, required=True,
-                        help="UQL query string, e.g. SELECT COUNT(*) FROM movie_reviews WHERE \"the review is positive\"")
-    parser.add_argument("--K", type=int, default=DEFAULT_K,
-                        help="Number of clusters for stratified sampling")
-    parser.add_argument("--sampling_ratio", type=float, default=DEFAULT_RATIO,
-                        help="Fraction to sample per cluster")
-    parser.add_argument("--batch_size", type=int, default=DEFAULT_BATCH_SIZE,
-                        help="Batch size for active retrieval")
-    parser.add_argument("--max_samples", type=int, default=DEFAULT_MAX_SAMPLES,
-                        help="Budget (max number of LLM calls) for active retrieval")
-    parser.add_argument("--seed", type=int, default=DEFAULT_SEED,
-                        help="Random seed for reproducibility")
-    parser.add_argument("--validate", action="store_true",
-                        help="If set, also compute the ground-truth by scanning all data")
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--query", type=str, required=True)
+    parser.add_argument("--sampling_ratio", type=float, default=DEFAULT_RATIO)
+    parser.add_argument("--batch_size", type=int, default=DEFAULT_BATCH_SIZE)
+    parser.add_argument("--max_samples", type=int, default=DEFAULT_MAX_SAMPLES)
+    parser.add_argument("--seed", type=int, default=DEFAULT_SEED)
+    parser.add_argument("--validate", action="store_true")
     args = parser.parse_args()
 
     result = compile_and_execute(
         query_str=args.query,
-        K=args.K,
         sampling_ratio=args.sampling_ratio,
         batch_size=args.batch_size,
         max_samples=args.max_samples,
         seed=args.seed,
         validate=args.validate
     )
-    print("Result:", result)
+    print(result)

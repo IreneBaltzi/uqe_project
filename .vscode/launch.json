@@ -1,0 +1,28 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        {
+            "name": "Testing",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/main.py",
+            "console": "integratedTerminal",
+            "justMyCode": false,
+            "cwd": "${workspaceFolder}",
+            "args": [
+            "--query",
+            "SELECT * FROM reviews WHERE \"the review is positive\" LIMIT 20",
+            // "SELECT COUNT(*) FROM reviews WHERE \"the review mentions the ending\"",
+            // "SELECT \"reason for being positive\" AS reason, COUNT(*) FROM movie_reviews WHERE \"the review is positive\" GROUP BY \"reason for being positive\" AS reason",
+            // "SELECT COUNT(*) FROM movie_reviews WHERE \"the review is positive\" GROUP BY \"the reason the review is positive\""
+            // "SELECT COUNT(*) FROM reviews WHERE \"the review is positive\"",
+
+            "--validate"
+            ],
+        }
+    ]
+}

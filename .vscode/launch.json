@@ -15,12 +15,15 @@
             "cwd": "${workspaceFolder}",
             "args": [
             "--query",
-            "SELECT * FROM reviews WHERE \"the review is positive\" LIMIT 20",
-            // "SELECT COUNT(*) FROM reviews WHERE \"the review mentions the ending\"",
-            // "SELECT \"reason for being positive\" AS reason, COUNT(*) FROM movie_reviews WHERE \"the review is positive\" GROUP BY \"reason for being positive\" AS reason",
-            // "SELECT COUNT(*) FROM movie_reviews WHERE \"the review is positive\" GROUP BY \"the reason the review is positive\""
-            // "SELECT COUNT(*) FROM reviews WHERE \"the review is positive\"",
-
+            // "SELECT * FROM reviews WHERE \"the review is negative\" LIMIT 5",
+            // // "SELECT COUNT(*) FROM reviews WHERE \"the review mentions the ending\"",
+            // // "SELECT \"reason for being positive\" AS reason, COUNT(*) FROM movie_reviews WHERE \"the review is positive\" GROUP BY \"reason for being positive\" AS reason",
+            // // "SELECT COUNT(*) FROM movie_reviews WHERE \"the review is positive\" GROUP BY \"the reason the review is positive\""
+            // // "SELECT COUNT(*) FROM reviews WHERE \"the review is positive\"",
+            // "SELECT COUNT(*) FROM reviews WHERE \"the review is positive\" GROUP BY \"reason\"",
+            // // "SELECT COUNT(*) FROM reviews WHERE \"the review is negative\"",
+            // "SELECT \"the sentiment of the review\" FROM reviews ORDER BY rating",
+            "SELECT * FROM reviews WHERE \"the review is negative\"",
             "--validate"
             ],
         }

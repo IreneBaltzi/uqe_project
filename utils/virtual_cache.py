@@ -36,7 +36,7 @@ class VirtualColumnCache:
                 with open(self.cache_file, "r") as f:
                     return json.load(f)
             except json.JSONDecodeError:
-                print("[WARNING] Cache file is corrupted. Starting fresh.")
+                print("[WARNING] Cache file is empty. Starting fresh.")
                 return {}
         return {}
 

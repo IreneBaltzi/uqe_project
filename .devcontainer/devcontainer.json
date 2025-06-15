@@ -33,11 +33,15 @@
 	// Uncomment the next line to run commands after the container is created.
 	// "postCreateCommand": "cat /etc/os-release",
 
-	"mounts": ["source=/mnt/research/data/irene_data,target=/data,type=bind"],
+	
 	
   // 6. Specify your workspace folder inside the container:
-    // "workspaceFolder": "/app",
+    // "workspaceFolder": "/workspace",
 
+    "mounts": [
+		"source=/mnt/research/data/irene_data,target=/data,type=bind"
+	],
+	
   	// Configure tool-specific properties.
 	"customizations": {
     "vscode": {

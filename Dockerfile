@@ -16,7 +16,7 @@ RUN apt-get update && \
     rm -rf /var/lib/apt/lists/*
     
 # Copy your application code into /app
-# COPY . /app
+COPY . /app
 
 # Default entrypoint: runs "python <script>"
 ENTRYPOINT ["python"]

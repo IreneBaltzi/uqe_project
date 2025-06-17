@@ -1,0 +1,45 @@
+version: '3.8'
+
+services:
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    networks:
+      - ollama-net
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+
+  uqe:
+    build: .
+    container_name: uqe_engine
+    depends_on:
+      - ollama
+    networks:
+      - ollama-net
+    shm_size: 50gb
+    cpus: "24"
+    volumes:
+      - /mnt/research/data/irene_data:/data
+      - .:/workspace
+    working_dir: /workspace
+    stdin_open: true
+    tty: true
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - capabilities: [gpu]
+
+networks:
+  ollama-net:
+    driver: bridge
+
+volumes:
+  ollama:

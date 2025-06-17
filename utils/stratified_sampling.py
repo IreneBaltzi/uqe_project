@@ -1,10 +1,8 @@
-# --- stratified_sampling.py (Refactored) ---
 import os
 import json
 import numpy as np
 import faiss
 from collections import defaultdict
-
 
 def compute_and_save_clusters(embeddings_jsonl: str, num_clusters: int, output_cluster_file: str):
     embeddings_list = []
@@ -68,7 +66,7 @@ def stratified_sample_and_weight(data, cluster_file, sampling_ratio, seed=42):
 
 
 if __name__ == "__main__":
-    EMBEDDINGS_FILE = os.getenv("EMBEDDINGS_FILE", "/data/imdb_embed_clustering.json")
+    EMBEDDINGS_FILE = os.getenv("EMBEDDINGS_FILE", "/data/imdb_embed_clustering_final.json")
     CLUSTERED_OUTPUT = os.getenv("ASSIGNMENTS_FILE", "/data/imdb_clustered_data.json")
     NUM_CLUSTERS = int(os.getenv("K_CLUSTERS", "50"))
 

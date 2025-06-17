@@ -1,14 +1,18 @@
 class CostEstimator:
     def __init__(self):
-        self.cost = 0
-        self.notes = []
+        self.costs = []
 
-    def add(self, count, note):
-        self.cost += count
-        self.notes.append((note, count))
+    def add(self, count, label):
+        self.costs.append((label, count))
 
     def report(self):
-        print("\n[ESTIMATED COST]")
-        for note, count in self.notes:
-            print(f"  {note}: {count} LLM calls")
-        print(f"  Total: {self.cost} LLM calls\n")
+        report_lines = ["[COST REPORT]"]
+        total = 0
+        for label, count in self.costs:
+            report_lines.append(f"  {label}: {count} LLM calls")
+            total += count
+        report_lines.append(f"  Total LLM calls: {total}")
+        summary = "\n".join(report_lines)
+        print(summary)
+        return summary  
+

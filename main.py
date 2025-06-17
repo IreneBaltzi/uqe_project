@@ -120,8 +120,12 @@ def execute_agg_where(condition_nl: str, sampling_ratio: float, seed: int, valid
         label = condition_nl[1].strip('"').lower().split()[-1]
         true_count = sum(1 for doc in docs if doc.get('label','').lower() == label)
         print(f"[Validation] True count = {true_count}, Estimate = {estimate_count}")
+    
+    if cost:
+        # print("[COST REPORT]")
+        print(cost.report())
 
-    return estimate_count
+    return estimate_count, cost
 
 def execute_semantic_retrieval(condition_nl: str,
                                 batch_size: int,
@@ -266,67 +270,6 @@ def execute_where_groupby(condition_nl: str, groupby_nl: str, sampling_ratio: fl
         print(cost.report())
     return result, cost
 
-
-def execute_select_only(select_expr, rows=None, validate=False, cost=None):
-    """
-    Handles SELECT ... FROM ... (without GROUPBY).
-    Loads rows if not provided.
-    """
-    cache = VirtualColumnCache()
-    if rows is None:
-        rows = [json.loads(line) for line in open(CLUSTER_FILE, 'r')]
-
-    if cost:
-        cost.add(len(rows), f"SELECT extraction on {len(rows)} rows")
-
-    if select_expr == '*':
-        print("[RESULT] SELECT * output (first 10 rows):")
-        for row in rows[:10]:
-            print(f"ID: {row['id']}")
-            print(f"Title: {row.get('title')}")
-            print(f"Rating: {row.get('rating')}")
-            print(f"Review: {row.get('review')[:200]}...\n")
-        if cost:
-            print("[COST REPORT]")
-            print(cost.report())
-        return rows
-
-    _, select_items = select_expr
-    for item in select_items:
-        expr_type = item[0]
-
-        if expr_type == "NL":
-            nl_text = item[1]
-            alias = nl_text.strip('"')
-        elif expr_type == "NL_AS":
-            nl_text = item[1]
-            alias = item[2]
-        else:
-            print(f"[SKIP] Unsupported SELECT type: {expr_type}")
-            continue
-
-        for row in rows:
-            row_id = row["id"]
-            def compute_fn():
-                prompt = (
-                    f"Read this review: \"{row['review']}\"\n"
-                    f"What is the value for: {nl_text}?\n"
-                    "Respond with a short phrase."
-                )
-                return call_llm_single(prompt)
-
-            val = cache.get_or_compute(row_id, alias, compute_fn)
-            row[alias] = val
-
-    print("[RESULT] SELECT output (first 10 rows):")
-    for row in rows[:10]:
-        print(f"{row['id']}: {row.get(alias)}")
-    if cost:
-        print("[COST REPORT]")
-        print(cost.report())
-    return rows
-
-
 def execute_orderby(attribute_key: str, rows=None, cost=None):
     if rows is None:
         rows = [json.loads(line) for line in open(CLUSTER_FILE, 'r')]
@@ -443,7 +386,6 @@ def compile_and_execute(query_str, sampling_ratio, batch_size,
                 validate=validate,
                 cost=cost
             )
-            return rows, cost.report()
 
     # === Handle COUNT(*) or other AGGREGATION ===
     if "SELECT" in kernels_by_type and "WHERE" in kernels_by_type:
@@ -451,7 +393,12 @@ def compile_and_execute(query_str, sampling_ratio, batch_size,
         where_kernel = kernels_by_type["WHERE"]
         select_items = select_kernel.config["expression"]
 
-        if isinstance(select_items, list) and any(t[0] == "AGG" for t in select_items):
+        # Fix: make sure select_items is a list
+        if isinstance(select_items, tuple):
+            select_items = [select_items]
+
+        # Aggregation detection
+        if any(t[0] == "AGG" for t in select_items):
             result = execute_agg_where(
                 condition_nl=where_kernel.config["condition"],
                 sampling_ratio=sampling_ratio,
@@ -491,16 +438,7 @@ def compile_and_execute(query_str, sampling_ratio, batch_size,
             seed=seed,
             validate=validate,
             cost=cost
-        )
-
-    # === Plain SELECT only ===
-    if "SELECT" in kernels_by_type:
-        rows = execute_select_only(
-            select_expr=kernels_by_type["SELECT"].config["expression"],
-            rows=rows,
-            validate=validate,
-            cost=cost
-        )
+        )    
 
     # === ORDER BY ===
     if "ORDERBY" in kernels_by_type:
@@ -510,7 +448,7 @@ def compile_and_execute(query_str, sampling_ratio, batch_size,
             cost=cost
         )
 
-    return rows, cost.report()
+    # return rows, cost.report()
 
 
 # =============================================================================
@@ -535,8 +473,4 @@ if __name__ == "__main__":
         seed=args.seed,
         validate=args.validate
     )
-    # print("\n=== RESULT ===")
-    # print(result)
 
-    # print("\n=== COST BREAKDOWN ===")
-    # print(cost_report)

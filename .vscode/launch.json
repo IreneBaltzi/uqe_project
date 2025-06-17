@@ -21,11 +21,11 @@
             // // "SELECT COUNT(*) FROM movie_reviews WHERE \"the review is positive\" GROUP BY \"the reason the review is positive\""
             // // "SELECT COUNT(*) FROM reviews WHERE \"the review is positive\"",
             // "SELECT COUNT(*) FROM reviews WHERE \"the review is negative\" GROUP BY \"reason\"",
-            // // "SELECT COUNT(*) FROM reviews WHERE \"the review is negative\"",
-            // "SELECT \"the sentiment of the review\" FROM reviews ORDER BY rating",
+            // "SELECT COUNT(*) FROM reviews WHERE \"the review is negative\"",
+            "SELECT COUNT(*) FROM reviews WHERE \"the review is negative\"",
             // "SELECT * FROM reviews WHERE \"the review is negative\"",
-            // "SELECT * FROM reviews WHERE \"the review is negative\"",
-
+            // "SELECT COUNT(*) FROM reviews WHERE \"the review praises the visuals\" GROUP BY \"what visuals are praised\"",
+               
             "--validate"
             ],
         }

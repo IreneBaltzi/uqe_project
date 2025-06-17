@@ -13,6 +13,6 @@ class CostEstimator:
             total += count
         report_lines.append(f"  Total LLM calls: {total}")
         summary = "\n".join(report_lines)
-        print(summary)
+        # print(summary)
         return summary  
 

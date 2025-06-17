@@ -4,3 +4,10 @@ utils/__pycache__/stratified_sampling.cpython-38.pyc
 utils/__pycache__/stratified_sampling.cpython-310.pyc
 utils/__pycache__/tokenizer_parser.cpython-38.pyc
 utils/__pycache__/tokenizer_parser.cpython-310.pyc
+utils/__pycache__/online_retrieval.cpython-311.pyc
+utils/__pycache__/parsetab.cpython-311.pyc
+utils/__pycache__/stratified_sampling.cpython-311.pyc
+utils/__pycache__/tokenizer_parser.cpython-311.pyc
+utils/__pycache__/virtual_cache.cpython-311.pyc
+__pycache__/cost_est.cpython-311.pyc
+__pycache__/planner.cpython-311.pyc
